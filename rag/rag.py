@@ -3,8 +3,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash-lite",
-    temperature=0
+    model="gemini-3.5-flash-lite"
 )
 
 
