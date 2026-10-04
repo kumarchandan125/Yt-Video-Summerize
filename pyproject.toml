@@ -1,0 +1,19 @@
+[project]
+name = "yt-video-summerize"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "kumarchandan125", email = "chandanpandey6048178@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "langchain-text-splitters>=1.1.3",
+]
+
+[project.scripts]
+yt-video-summerize = "yt_video_summerize:main"
+
+[build-system]
+requires = ["uv_build>=0.12.10,<0.13.0"]
+build-backend = "uv_build"
