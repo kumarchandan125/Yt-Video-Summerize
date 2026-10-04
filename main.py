@@ -1,7 +1,8 @@
 from youtube_transcript_api import YouTubeTranscriptApi
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-
+from chroma_vector_store.vectorstore import create_vector_store
+from rag.rag import create_rag_chain
 
 
 def get_video_id(url: str) -> str:
@@ -52,8 +53,37 @@ if __name__ == "__main__":
     chunks=creat_chunks(transcript,video_id)
 
     print(f"\nTotal chunks: {len(chunks)}")
+    vector_store= create_vector_store(chunks)
 
-    for i, chunk in enumerate(chunks[:3]):
-        print(f"\n--- Chunk {i + 1} ---")
-        print(chunk.page_content[:500])
-        print("\nMetadata:", chunk.metadata)
+    print("\nChunks successfully stored in Chroma!")
+
+    retriever=vector_store.as_retriever(
+        search_kwargs={
+            "k":3
+        }
+    )
+    llm,prompt=create_rag_chain()
+
+    chat_history = []
+    print("\nYou can now chat with the video.")
+    print("Type 'exit' or 'quit' to stop.")
+
+    while True:
+        question = input("\nYou: ").strip()
+        if question.lower() in {"exit", "quit"}:
+            print("\nChat ended.") 
+            break
+        if not question:
+            continue
+        documents=retriever.invoke(question)
+        context="\n\n".join(
+            document.page_content for document in documents
+        )
+        messages = prompt.invoke( 
+            { 
+                "context": context, 
+                "chat_history": chat_history, 
+                "question": question 
+            } 
+        )
+        
