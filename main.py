@@ -62,12 +62,15 @@ if __name__ == "__main__":
             "k":3
         }
     )
-    llm,prompt=create_rag_chain()
+    llm,query_rewrite_prompt,answer_prompt=create_rag_chain()
+
+    #  Conversation History
 
     chat_history = []
     print("\nYou can now chat with the video.")
     print("Type 'exit' or 'quit' to stop.")
 
+    # Chat Loop
     while True:
         question = input("\nYou: ").strip()
         if question.lower() in {"exit", "quit"}:
@@ -75,15 +78,48 @@ if __name__ == "__main__":
             break
         if not question:
             continue
-        documents=retriever.invoke(question)
+        #Rewrite User Query
+        rewrite_messages=query_rewrite_prompt.invoke(
+            {
+                "chat_history":chat_history,
+                "question":question
+            }
+        )
+
+        rewritten_query=llm.invoke(
+            rewrite_messages
+        ).content.strip()
+
+     
+
+        documents=retriever.invoke(rewritten_query)
+
+        #Create Context
+
         context="\n\n".join(
             document.page_content for document in documents
         )
-        messages = prompt.invoke( 
+
+        #Generate Answer
+        answer_messages = answer_prompt.invoke( 
             { 
                 "context": context, 
                 "chat_history": chat_history, 
                 "question": question 
             } 
+        )
+        response=llm.invoke(answer_messages)
+        answer=response.content
+
+        #Display Answer
+
+        print("\nAI: ",answer)
+
+        chat_history.append(
+            ("human",question)
+        )
+        chat_history.append(
+            ("ai,",answer)
+            
         )
         

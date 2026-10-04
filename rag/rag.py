@@ -8,7 +8,48 @@ llm = ChatGoogleGenerativeAI(
 )
 
 
-prompt = ChatPromptTemplate.from_messages([
+# ---------------------------------------
+# Query Rewriting Prompt
+# ---------------------------------------
+
+query_rewrite_prompt = ChatPromptTemplate.from_messages([
+    (
+        "system",
+        """
+You rewrite follow-up questions into standalone search queries.
+
+Use the conversation history to understand references such as:
+- he
+- she
+- it
+- this
+- that
+- why
+- how
+- what about it
+
+Rules:
+- Return ONLY the rewritten search query.
+- Do not answer the question.
+- If the question is already standalone, return it unchanged.
+"""
+    ),
+    (
+        "placeholder",
+        "{chat_history}"
+    ),
+    (
+        "human",
+        "{question}"
+    )
+])
+
+
+# ---------------------------------------
+# Answer Prompt
+# ---------------------------------------
+
+answer_prompt = ChatPromptTemplate.from_messages([
     (
         "system",
         """
@@ -19,10 +60,11 @@ and conversation history.
 
 Rules:
 - Use the video context as the primary source.
-- Do not invent information that is not supported by the video.
-- If the answer is not available in the video context, clearly say so.
-- Use conversation history to understand follow-up questions.
-- Keep answers clear and concise.
+- Do not invent information.
+- If the answer is not available in the video context,
+  clearly say that it is not available in the video.
+- Use conversation history only to understand the user's intent.
+- Give a clear and concise answer.
 
 Video Context:
 {context}
@@ -41,4 +83,5 @@ Video Context:
 
 def create_rag_chain():
 
-    return llm, prompt
+    return llm, query_rewrite_prompt, answer_prompt
+
